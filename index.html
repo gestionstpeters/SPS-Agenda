@@ -288,8 +288,18 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 .bday-cfg-name{flex:2;font-size:13px;border:none;background:transparent;outline:none;font-family:'Source Sans 3',sans-serif;color:#1A1A1A}
 .bday-cfg-date{flex:1;font-size:13px;border:none;background:transparent;outline:none;font-family:'Source Sans 3',sans-serif;color:#1A1A1A}
 .bday-cfg-del{background:none;border:none;color:#C8C5BF;cursor:pointer;font-size:16px;padding:0 4px}
-.sync-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;background:#EAF5EC;border:1px solid #3a7046;border-radius:20px;font-size:11px;font-weight:600;color:#3a7046}
-.sync-dot{width:7px;height:7px;border-radius:50%;background:#3a7046;animation:pulse 2s ease-in-out infinite}
+.tv-overlay{display:none;position:fixed;inset:0;background:#0a0a0a;z-index:500;flex-direction:column}
+.tv-overlay.open{display:flex}
+.tv-cbar{background:#111;padding:10px 20px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #222;flex-shrink:0}
+.tv-hint{font-size:12px;color:rgba(255,255,255,.5)}
+.tv-abtn{display:flex;align-items:center;gap:6px;padding:7px 14px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);border-radius:4px;color:#fff;font-family:'Source Sans 3',sans-serif;font-size:12px;font-weight:500;cursor:pointer;transition:background .15s}
+.tv-abtn:hover{background:rgba(255,255,255,.16)}
+.tv-fw{flex:1;display:flex;align-items:center;justify-content:center;padding:20px;overflow:hidden}
+.tv-screen{background:#0f0f0f;position:relative;overflow:hidden;border-radius:4px;box-shadow:0 0 0 3px #222,0 20px 60px rgba(0,0,0,.8);transform-origin:center center;flex-shrink:0;width:1280px;height:720px}
+.slide-scr{background:#0f0f14;position:relative;overflow:hidden;border-radius:4px;box-shadow:0 0 0 3px #222,0 20px 60px rgba(0,0,0,.8);transform-origin:center center;flex-shrink:0;width:1280px;height:720px}
+.btn-pout{display:flex;align-items:center;gap:7px;padding:8px 16px;background:#fff;border:1.5px solid #D33A2E;border-radius:6px;color:#D33A2E;font-family:'Source Sans 3',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s}
+.btn-pout:hover{background:#f5e8e7}
+.btn-pout.gold{border-color:#B8960C;color:#7a6100}.btn-pout.gold:hover{background:#f5f0e0}
 </style>
 </head>
 <body>
@@ -527,7 +537,9 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
       <span class="wbadge" id="week-num-proj">Sem. 00</span>
     </div>
     <div class="proj-acts">
-      <button class="btn-pfill" id="btn-export-rotativo"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Exportar index.html</button>
+      <button class="btn-pout gold" id="btn-lamina"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="2"/><line x1="2" y1="9" x2="22" y2="9"/></svg>Lámina del día</button>
+      <button class="btn-pout" id="btn-tv-preview"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>Vista TV</button>
+      <button class="btn-pfill" id="btn-export-rotativo"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Exportar TV</button>
     </div>
   </div>
   <div class="proj-grid" id="projection-grid"></div>
@@ -546,6 +558,7 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
       <div class="cfg-sidebar-item" data-cfg="cursos"><span class="csi-icon">📚</span> Cursos y grupos</div>
       <div class="cfg-sidebar-item" data-cfg="secciones"><span class="csi-icon">📋</span> Secciones visibles</div>
       <div class="cfg-sidebar-item" data-cfg="requisitos"><span class="csi-icon">⚙️</span> Requisitos</div>
+      <div class="cfg-sidebar-item" data-cfg="correo"><span class="csi-icon">✉️</span> Texto del correo</div>
     </div>
     <div class="cfg-content">
       <div class="cfg-section active" id="cfg-destinatarios">
@@ -592,7 +605,31 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
   </div>
 </div>
 
-</main>
+  <!-- TV overlay -->
+  <div class="tv-overlay" id="tv-overlay">
+    <div class="tv-cbar">
+      <span class="tv-hint">Vista TV — ESC para cerrar · F pantalla completa · ← → navegar · Espacio pausar</span>
+      <div style="display:flex;gap:8px">
+        <button class="tv-abtn" id="btn-tv-export-inner">⬇ Exportar index.html</button>
+        <button class="tv-abtn" id="btn-tv-close">✕ Cerrar</button>
+      </div>
+    </div>
+    <div class="tv-fw"><div class="tv-screen" id="tv-screen"></div></div>
+  </div>
+  <!-- Lámina overlay -->
+  <div class="tv-overlay" id="slide-overlay" style="background:#0a0a12">
+    <div class="tv-cbar">
+      <span class="tv-hint">Lámina del día — ESC para cerrar</span>
+      <div style="display:flex;gap:8px;align-items:center">
+        <span style="font-size:12px;color:rgba(255,255,255,.4)">Día:</span>
+        <select id="slide-day-sel" style="background:#222;color:#fff;border:1px solid #444;border-radius:4px;padding:5px 10px;font-size:12px;cursor:pointer">
+          <option>Lunes</option><option>Martes</option><option>Miércoles</option><option>Jueves</option><option>Viernes</option>
+        </select>
+        <button class="tv-abtn" id="btn-slide-close">✕ Cerrar</button>
+      </div>
+    </div>
+    <div class="tv-fw"><div id="slide-screen" class="slide-scr"></div></div>
+  </div>
 <div class="toast" id="toast"></div>
 <div class="modal-overlay" id="modal-overlay">
   <div class="modal">
@@ -648,7 +685,19 @@ async function sheetsSave(data){
 var RESPONSABLES_DB=[];
 var ALUMNOS_DB=[];
 var BIRTHDAYS_DB=[];
-var CONFIG={
+// ══ MAIL CONFIG ══
+var MAIL_CONFIG={
+  asunto:"📅 Agenda Saint Peter's School — Semana {semana} · {fechas}",
+  saludo:"Estimado equipo,",
+  intro:"A continuación les compartimos el calendario de actividades para la semana indicada. Les pedimos revisar las actividades que les corresponden y coordinarse con anticipación.",
+  cierre:"Ante cualquier consulta, no duden en contactarnos.\n\nSaludos cordiales,",
+  firma:"Equipo de Coordinación",
+  cargo:"Saint Peter's School · Viña del Mar",
+  telefono:"+56 32 000 0000",
+  email:"gestion@stpeters.cl"
+};
+
+
   types:[{key:'assembly',label:'Assembly',color:'#D33A2E'},{key:'salida',label:'Salida',color:'#B8960C'},{key:'acto',label:'Acto',color:'#5B8DB8'},{key:'reunion',label:'Reunión',color:'#6BAA75'},{key:'coordinacion',label:'Coordinación',color:'#8A8F99'},{key:'sport',label:'Sport',color:'#1a7a3c'},{key:'otro',label:'Otro',color:'#9A9690'}],
   roles:[{key:'porteria',label:'🔐 Portería'},{key:'inspectoria',label:'📋 Inspectoría'},{key:'profesores',label:'📚 Profesores'},{key:'administrativos',label:'🗂️ Administrativos'},{key:'comunicacion',label:'📣 Comunicación'},{key:'general',label:'📢 General'}],
   courseGroups:[{label:'Infant School',courses:['Playgroup','Pre-Kinder','Kinder']},{label:'Junior School',courses:['1st Grade','2nd Grade','3rd Grade','4th Grade']},{label:'Middle School',courses:['5th Grade','6th Grade','7th Grade','8th Grade']},{label:'Senior School',courses:['1st Year','2nd Year','3rd Year','4th Year']}],
@@ -852,7 +901,42 @@ function getEnviarActivities(){return getWeekActivities(enviarWeekOffset);}
 function updateEnviarWeekDisplay(){var lbl=formatWeekLabel(enviarWeekOffset),s=getWeekStart(enviarWeekOffset),wn=getWeekNumber(s);var el=Q('#enviar-week-label');if(el)el.textContent=lbl;var bn=Q('#enviar-week-badge');if(bn)bn.textContent='Sem. '+wn;var sc=Q('#send-count');if(sc)sc.textContent=getEnviarActivities().length;if(currentPreviewRole!==null)showRecipientPreview(currentPreviewRole);else renderEmailPreview();}
 function getReqLabel(id){var r=CONFIG.requirements.find(x=>x.id===id);return r?r.label:id;}
 
-function buildEmailHTML(acts,r,wl,wn){var sec=r.sections||{};var filter=RFILT[r.role]||RFILT.general;var filtered=acts.filter(filter);var rc=r.bg||'#D33A2E';var html='<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body style="margin:0;padding:0;background:#f5f5f5;font-family:Arial,sans-serif"><div style="max-width:620px;margin:0 auto;background:#fff"><div style="background:'+rc+';border-bottom:4px solid #B8960C;padding:20px 28px"><div style="font-family:Georgia,serif;font-size:22px;font-weight:700;color:#fff">Saint Peter\'s School</div><div style="font-size:10px;color:rgba(255,255,255,.7);letter-spacing:.1em;text-transform:uppercase;margin-top:3px">Colegio Británico · Viña del Mar · Desde 1918</div><div style="margin-top:10px;display:flex;justify-content:space-between"><span style="font-size:13px;font-weight:700;color:#fff">Agenda Semanal — Semana '+wn+'</span><span style="font-size:12px;font-style:italic;color:rgba(255,255,255,.85)">'+wl+'</span></div></div><div style="background:'+rc+'22;border-left:4px solid '+rc+';padding:10px 20px;font-size:12px;color:'+rc+';font-weight:700">Para: '+r.name+'</div><div style="padding:20px 28px">';if(!filtered.length){html+='<p style="color:#999;text-align:center;padding:30px 0">Sin actividades relevantes.</p>';}else{var byDay={};DAYS.forEach(d=>{var da=filtered.filter(a=>a.dia===d);if(da.length)byDay[d]=da;});Object.keys(byDay).forEach(day=>{html+='<div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:'+rc+';border-bottom:2px solid '+rc+'33;padding-bottom:4px;margin:20px 0 10px">'+day+'</div>';byDay[day].forEach(a=>{var bc=getTypeColor(a.tipo),tl=getTypeLabel(a.tipo);var cursos=Array.isArray(a.cursos)?a.cursos.join(', '):'';var reqs=(a.requisitos||[]).map(getReqLabel).filter(Boolean);if(a.reqOtro)reqs.push(a.reqOtro);var pStr=personasStr(a.personas);html+='<div style="border-left:4px solid '+bc+';padding:12px 14px;margin-bottom:10px;background:#fafafa;border-radius:0 4px 4px 0"><div style="font-size:9px;font-weight:700;color:'+bc+';text-transform:uppercase;margin-bottom:4px">'+tl+'</div><div style="font-size:15px;font-weight:700;color:#1a1a1a;margin-bottom:8px">'+a.titulo+'</div><table style="width:100%;border-collapse:collapse;font-size:12px;color:#444"><tr><td style="padding:2px 0;width:100px;color:#888;font-weight:600">📅 Fecha/Hora</td><td>'+(a.fecha||a.dia)+(a.hora?' · <strong>'+a.hora+'</strong>':'')+(a.retorno?' — '+a.retorno:'')+'</td></tr><tr><td style="padding:2px 0;color:#888;font-weight:600">📍 Lugar</td><td>'+(a.locacion==='externo'?'🌍 ':'🏫 ')+a.lugar+(a.lugarDireccion?' — '+a.lugarDireccion:'')+'</td></tr>'+(sec.descripcion&&a.desc?'<tr><td style="padding:2px 0;color:#888;font-weight:600">📝 Desc.</td><td>'+a.desc+'</td></tr>':'')+(sec.responsables&&a.responsables&&a.responsables.length?'<tr><td style="padding:2px 0;color:#888;font-weight:600">👤 Resp.</td><td>'+a.responsables.join(', ')+'</td></tr>':'')+(sec.cursos&&pStr?'<tr><td style="padding:2px 0;color:#888;font-weight:600">👥 Asist.</td><td>'+pStr+'</td></tr>':'')+(sec.cursos&&cursos?'<tr><td style="padding:2px 0;color:#888;font-weight:600">📚 Cursos</td><td>'+cursos+'</td></tr>':'')+(sec.traslado&&a.traslado?'<tr><td style="padding:2px 0;color:#888;font-weight:600">🚌 Traslado</td><td>'+(a.trasladoDet||'')+(a.trasladoSalida?' Sal:'+a.trasladoSalida:'')+(a.trasladoLlegada?' →'+a.trasladoLlegada:'')+'</td></tr>':'')+(sec.porteria&&a.porteria?'<tr><td style="padding:2px 0;color:#888;font-weight:600">🔐 Portería</td><td>Autorizado'+(a.porteriaNum?' · '+a.porteriaNum+' pers.':'')+'</td></tr>':'')+(sec.requisitos&&reqs.length?'<tr><td style="padding:2px 0;color:#888;font-weight:600">⚙️ Req.</td><td>'+reqs.join(' · ')+'</td></tr>':'')+(sec.observaciones&&a.obs?'<tr><td style="padding:2px 0;color:#888;font-weight:600">💬 Obs.</td><td>'+a.obs+'</td></tr>':'')+'</table></div>';});});}html+='</div><div style="background:#f5f5f5;border-top:1px solid #e0e0e0;padding:14px 28px;font-size:10px;color:#aaa;text-align:center">Saint Peter\'s School · Agenda Semana '+wn+' · info@stpeters.cl</div></div></body></html>';return html;}
+function buildEmailHTML(acts,r,wl,wn){
+  var sec=r.sections||{};var filter=RFILT[r.role]||RFILT.general;var filtered=acts.filter(filter);var rc=r.bg||'#D33A2E';
+  var asunto=(MAIL_CONFIG.asunto||'').replace('{semana}',wn).replace('{fechas}',wl);
+  var saludo=MAIL_CONFIG.saludo||'Estimado equipo,';
+  var intro=MAIL_CONFIG.intro||'';
+  var cierre=(MAIL_CONFIG.cierre||'').replace(/\n/g,'<br>');
+  var firma=MAIL_CONFIG.firma||'Equipo de Coordinación';
+  var cargo=MAIL_CONFIG.cargo||"Saint Peter's School";
+  var tel=MAIL_CONFIG.telefono||'';
+  var mailTo=MAIL_CONFIG.email||'gestion@stpeters.cl';
+
+  var html='<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body style="margin:0;padding:0;background:#f5f5f5;font-family:Arial,sans-serif"><div style="max-width:620px;margin:0 auto;background:#fff">';
+  // Header
+  html+='<div style="background:'+rc+';border-bottom:4px solid #B8960C;padding:20px 28px"><div style="font-family:Georgia,serif;font-size:22px;font-weight:700;color:#fff">Saint Peter\'s School</div><div style="font-size:10px;color:rgba(255,255,255,.7);letter-spacing:.1em;text-transform:uppercase;margin-top:3px">Colegio Británico · Viña del Mar · Desde 1918</div><div style="margin-top:10px;display:flex;justify-content:space-between"><span style="font-size:13px;font-weight:700;color:#fff">Agenda Semanal — Semana '+wn+'</span><span style="font-size:12px;font-style:italic;color:rgba(255,255,255,.85)">'+wl+'</span></div></div>';
+  // Para
+  html+='<div style="background:'+rc+'22;border-left:4px solid '+rc+';padding:10px 20px;font-size:12px;color:'+rc+';font-weight:700">Para: '+r.name+'</div>';
+  // Saludo e intro
+  html+='<div style="padding:20px 28px">';
+  if(saludo)html+='<p style="font-size:13px;color:#333;margin-bottom:12px">'+saludo+'</p>';
+  if(intro)html+='<p style="font-size:13px;color:#555;margin-bottom:20px;line-height:1.6">'+intro+'</p>';
+  // Actividades
+  if(!filtered.length){html+='<p style="color:#999;text-align:center;padding:20px 0">Sin actividades relevantes para esta semana.</p>';}
+  else{var byDay={};DAYS.forEach(d=>{var da=filtered.filter(a=>a.dia===d);if(da.length)byDay[d]=da;});Object.keys(byDay).forEach(day=>{html+='<div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:'+rc+';border-bottom:2px solid '+rc+'33;padding-bottom:4px;margin:20px 0 10px">'+day+'</div>';byDay[day].forEach(a=>{var bc=getTypeColor(a.tipo),tl=getTypeLabel(a.tipo);var cursos=Array.isArray(a.cursos)?a.cursos.join(', '):'';var reqs=(a.requisitos||[]).map(getReqLabel).filter(Boolean);if(a.reqOtro)reqs.push(a.reqOtro);var pStr=personasStr(a.personas);html+='<div style="border-left:4px solid '+bc+';padding:12px 14px;margin-bottom:10px;background:#fafafa;border-radius:0 4px 4px 0"><div style="font-size:9px;font-weight:700;color:'+bc+';text-transform:uppercase;margin-bottom:4px">'+tl+'</div><div style="font-size:15px;font-weight:700;color:#1a1a1a;margin-bottom:8px">'+a.titulo+'</div><table style="width:100%;border-collapse:collapse;font-size:12px;color:#444"><tr><td style="padding:2px 0;width:100px;color:#888;font-weight:600">📅 Fecha/Hora</td><td>'+(a.fecha||a.dia)+(a.hora?' · <strong>'+a.hora+'</strong>':'')+(a.retorno?' — '+a.retorno:'')+'</td></tr><tr><td style="padding:2px 0;color:#888;font-weight:600">📍 Lugar</td><td>'+(a.locacion==='externo'?'🌍 ':'🏫 ')+a.lugar+(a.lugarDireccion?' — '+a.lugarDireccion:'')+'</td></tr>'+(sec.descripcion&&a.desc?'<tr><td style="padding:2px 0;color:#888;font-weight:600">📝 Desc.</td><td>'+a.desc+'</td></tr>':'')+(sec.responsables&&a.responsables&&a.responsables.length?'<tr><td style="padding:2px 0;color:#888;font-weight:600">👤 Resp.</td><td>'+a.responsables.join(', ')+'</td></tr>':'')+(sec.cursos&&pStr?'<tr><td style="padding:2px 0;color:#888;font-weight:600">👥 Asist.</td><td>'+pStr+'</td></tr>':'')+(sec.cursos&&cursos?'<tr><td style="padding:2px 0;color:#888;font-weight:600">📚 Cursos</td><td>'+cursos+'</td></tr>':'')+(sec.traslado&&a.traslado?'<tr><td style="padding:2px 0;color:#888;font-weight:600">🚌 Traslado</td><td>'+(a.trasladoDet||'')+(a.trasladoSalida?' Sal:'+a.trasladoSalida:'')+(a.trasladoLlegada?' →'+a.trasladoLlegada:'')+'</td></tr>':'')+(sec.porteria&&a.porteria?'<tr><td style="padding:2px 0;color:#888;font-weight:600">🔐 Portería</td><td>Autorizado'+(a.porteriaNum?' · '+a.porteriaNum+' pers.':'')+'</td></tr>':'')+(sec.requisitos&&reqs.length?'<tr><td style="padding:2px 0;color:#888;font-weight:600">⚙️ Req.</td><td>'+reqs.join(' · ')+'</td></tr>':'')+(sec.observaciones&&a.obs?'<tr><td style="padding:2px 0;color:#888;font-weight:600">💬 Obs.</td><td>'+a.obs+'</td></tr>':'')+'</table></div>';});});}
+  // Cierre
+  if(cierre)html+='<div style="margin-top:24px;padding-top:16px;border-top:1px solid #eee;font-size:13px;color:#555;line-height:1.6">'+cierre+'</div>';
+  // Firma
+  html+='<div style="margin-top:16px;padding:16px;background:#f9f9f9;border-left:4px solid '+rc+';border-radius:0 6px 6px 0">';
+  html+='<div style="font-size:14px;font-weight:700;color:#1a1a1a">'+firma+'</div>';
+  if(cargo)html+='<div style="font-size:12px;color:#666;margin-top:2px">'+cargo+'</div>';
+  if(tel)html+='<div style="font-size:12px;color:#666;margin-top:4px">📞 '+tel+'</div>';
+  if(mailTo)html+='<div style="font-size:12px;color:'+rc+';margin-top:2px">✉️ '+mailTo+'</div>';
+  html+='</div></div>';
+  // Footer
+  html+='<div style="background:#f5f5f5;border-top:1px solid #e0e0e0;padding:14px 28px;font-size:10px;color:#aaa;text-align:center">Saint Peter\'s School · Agenda Semana '+wn+' · '+mailTo+'</div></div></body></html>';
+  return html;
+}
 
 function buildAgendaPreviewHTML(acts,recipientIdx){var r=RECIPIENTS[recipientIdx]||null;var sec=r?r.sections:{descripcion:true,responsables:true,cursos:true,traslado:true,porteria:true,requisitos:true,observaciones:true};var roleKey=r?r.role:'general';var filter=RFILT[roleKey]||RFILT.general;var filtered=acts.filter(filter);var wl=formatWeekLabel(enviarWeekOffset);var rc=r?r.bg:'#D33A2E';var h='<div style="margin-bottom:14px;padding-bottom:12px;border-bottom:2px solid '+rc+'"><div style="font-size:15px;font-weight:700;font-family:serif">Saint Peter\'s School — Agenda Semanal</div><div style="font-size:12px;color:#5C5A55;margin-top:2px">Semana del '+wl+'</div>'+(r?'<div style="margin-top:6px;font-size:11px;font-weight:700;color:'+rc+'">Para: '+r.name+'</div>':'')+'</div>';if(!filtered.length)h+='<div style="color:#9A9690;font-size:13px;padding:16px 0;text-align:center">Sin actividades relevantes.</div>';else{var byDay={};DAYS.forEach(d=>{var da=filtered.filter(a=>a.dia===d);if(da.length)byDay[d]=da;});Object.keys(byDay).forEach(day=>{h+='<div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:'+rc+';margin:14px 0 6px;padding-bottom:4px;border-bottom:1px solid #f5e8e7">'+day+'</div>';byDay[day].forEach(a=>{var bc=getTypeColor(a.tipo),tl=getTypeLabel(a.tipo);var cursos=Array.isArray(a.cursos)?a.cursos.join(', '):'';var reqs=(a.requisitos||[]).map(getReqLabel).filter(Boolean);if(a.reqOtro)reqs.push(a.reqOtro);var pStr=personasStr(a.personas);h+='<div style="margin-bottom:10px;padding:10px 12px;background:#fff;border:1px solid #E2E0DC;border-radius:4px;border-left:3px solid '+bc+'"><div style="font-size:10px;font-weight:700;color:'+bc+';margin-bottom:4px">'+tl+'</div><div style="font-weight:700;font-size:13px;margin-bottom:6px">'+a.titulo+'</div><table style="width:100%;border-collapse:collapse;font-size:12px"><tr><td style="padding:2px 10px 2px 0;color:#9A9690;width:80px">📅</td><td>'+(a.fecha||a.dia)+' '+a.hora+'</td></tr>'+(a.retorno?'<tr><td style="padding:2px 10px 2px 0;color:#9A9690">🕓</td><td>'+a.retorno+'</td></tr>':'')+'<tr><td style="padding:2px 10px 2px 0;color:#9A9690">📍</td><td>'+(a.locacion==='externo'?'🌍 ':'🏫 ')+a.lugar+'</td></tr>'+(sec.responsables&&a.responsables&&a.responsables.length?'<tr><td style="padding:2px 10px 2px 0;color:#9A9690">👤</td><td>'+a.responsables.join(', ')+'</td></tr>':'')+(sec.cursos&&pStr?'<tr><td style="padding:2px 10px 2px 0;color:#9A9690">👥</td><td>'+pStr+'</td></tr>':'')+(sec.traslado&&a.traslado?'<tr><td style="padding:2px 10px 2px 0;color:#9A9690">🚌</td><td>'+(a.trasladoDet||'')+'</td></tr>':'')+(sec.requisitos&&reqs.length?'<tr><td style="padding:2px 10px 2px 0;color:#9A9690">⚙️</td><td>'+reqs.join(' · ')+'</td></tr>':'')+'</table></div>';});});}h+='<div style="margin-top:14px;font-size:11px;color:#9A9690;font-style:italic">— Equipo de Coordinación · Saint Peter\'s School</div>';return h;}
 
@@ -870,7 +954,53 @@ on('#btn-enviar-agenda','click',()=>{var checked=RECIPIENTS.filter(r=>r.checked)
 on('#btn-copy-preview','click',()=>{navigator.clipboard.writeText(Q('#email-preview').innerText).then(()=>showToast('📋 Texto copiado'));});
 on('#btn-pdf-todos','click',()=>generatePDF(RECIPIENTS.map((_,i)=>i),'SPS_Agenda_Completa_Sem'+getWeekNumber(getWeekStart(enviarWeekOffset))+'.pdf'));
 
-// ══ ROTATIVO EXPORT ══
+// ══ TV & LÁMINA ══
+var tvClockInterval=null;
+function startTVClock(){updateTVClock();tvClockInterval=setInterval(updateTVClock,1000);}
+function stopTVClock(){clearInterval(tvClockInterval);tvClockInterval=null;}
+function updateTVClock(){document.querySelectorAll('.clock').forEach(el=>{var n=new Date(),dn=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'],mn=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];el.textContent=dn[n.getDay()]+' '+n.getDate()+' de '+mn[n.getMonth()]+' '+n.getFullYear()+' · '+String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0')+':'+String(n.getSeconds()).padStart(2,'0');});}
+function scaleEl(el,w,h){var fw=el.parentElement;if(!fw)return;var sc=Math.min((fw.clientWidth-40)/w,(fw.clientHeight-40)/h,1);el.style.transform='scale('+sc+')';el.style.transformOrigin='center center';}
+
+function buildTVInner(){
+  var s=getWeekStart(currentWeekOffset),wl=formatWeekLabel(currentWeekOffset),wn=getWeekNumber(s);
+  var mn=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  var dh='';
+  for(var i=0;i<5;i++){
+    var day=DAYS[i],d=new Date(s);d.setDate(s.getDate()+i);
+    var isToday=d.toDateString()===new Date().toDateString();
+    var dayActs=activities.filter(a=>{if(!a.fecha)return false;var p=a.fecha.split('-'),ad=new Date(+p[0],+p[1]-1,+p[2]);return a.dia===day&&ad.toDateString()===d.toDateString();}).sort((a,b)=>a.hora.localeCompare(b.hora));
+    var bdays=getBirthdaysForDate(d);
+    var bdayH=bdays.length?'<div style="background:rgba(184,150,12,.2);border:1px solid rgba(184,150,12,.4);border-radius:4px;padding:4px 8px;margin-bottom:5px;font-size:9px;color:#f0c040">🎂 '+bdays.map(b=>b.name).join(', ')+'</div>':'';
+    var evH=dayActs.length?dayActs.map(a=>'<div style="background:rgba(255,255,255,.06);border-left:4px solid '+getTypeColor(a.tipo)+';border-radius:0 4px 4px 0;padding:8px 10px;margin-bottom:7px"><div style="font-size:10px;font-weight:700;color:rgba(255,255,255,.4);margin-bottom:2px">'+a.hora+'</div><div style="font-family:Georgia,serif;font-size:15px;color:#fff;line-height:1.25">'+a.titulo+'</div><div style="font-size:10px;color:rgba(255,255,255,.32);margin-top:2px">'+a.lugar+'</div></div>').join(''):'<div style="font-size:11px;color:rgba(255,255,255,.15);padding:6px 0;font-style:italic">Sin actividades</div>';
+    dh+='<div style="display:flex;flex-direction:column"><div style="padding:10px 0 8px;border-bottom:2px solid rgba(255,255,255,.1);margin-bottom:10px"><div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:'+(isToday?'#D33A2E':'rgba(255,255,255,.35)')+'">'+day+'</div><div style="font-family:Georgia,serif;font-size:40px;color:'+(isToday?'#D33A2E':'#fff')+';line-height:1">'+d.getDate()+'</div><div style="font-size:10px;color:rgba(255,255,255,.3)">'+mn[d.getMonth()]+'</div></div>'+bdayH+evH+'</div>';
+  }
+  return'<div style="position:absolute;inset:0;background:#0f0f0f"></div><div style="position:absolute;top:0;left:0;right:0;height:10px;background:#D33A2E"></div><div style="position:absolute;top:10px;left:0;right:0;height:3px;background:#B8960C"></div><div style="position:absolute;bottom:0;left:0;right:0;height:10px;background:#D33A2E"></div><div style="position:absolute;bottom:13px;left:0;right:0;height:3px;background:#B8960C"></div><div style="position:absolute;top:13px;left:0;right:0;height:100px;display:flex;align-items:center;justify-content:space-between;padding:0 44px;border-bottom:1px solid rgba(255,255,255,.07)"><div><div style="font-family:Georgia,serif;font-size:32px;font-weight:600;color:#fff">Saint Peter\'s School</div><div style="font-size:11px;color:rgba(255,255,255,.45);letter-spacing:.1em;text-transform:uppercase;margin-top:4px">Colegio Británico · Viña del Mar · Desde 1918</div></div><div style="text-align:right"><div style="font-family:Georgia,serif;font-size:18px;font-style:italic;color:rgba(255,255,255,.8)">'+wl+'</div><div style="font-size:11px;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:.08em;margin-top:3px">Semana '+wn+'</div></div></div><div style="position:absolute;top:113px;left:0;right:0;height:40px;background:#D33A2E;display:flex;align-items:center;padding:0 44px"><div style="font-size:14px;font-weight:700;color:#fff;letter-spacing:.1em;text-transform:uppercase">Calendario de Actividades</div></div><div style="position:absolute;top:153px;bottom:24px;left:0;right:0;display:grid;grid-template-columns:repeat(5,1fr);padding:0 44px 16px;column-gap:12px;overflow:hidden">'+dh+'</div><div class="clock" style="position:absolute;bottom:18px;right:44px;font-size:11px;color:rgba(255,255,255,.28);letter-spacing:.06em"></div>';
+}
+
+function renderDaySlide(){
+  var selEl=Q('#slide-day-sel'),day=selEl?selEl.value:'Lunes';
+  var s=getWeekStart(currentWeekOffset),dayIdx=DAYS.indexOf(day),d=new Date(s);d.setDate(s.getDate()+Math.max(0,dayIdx));
+  var mn=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  var dateStr=d.getDate()+' de '+mn[d.getMonth()]+' '+d.getFullYear();
+  var acts=activities.filter(a=>{if(!a.fecha)return false;var p=a.fecha.split('-'),ad=new Date(+p[0],+p[1]-1,+p[2]);return a.dia===day&&ad.toDateString()===d.toDateString();}).sort((a,b)=>a.hora.localeCompare(b.hora));
+  var bdays=getBirthdaysForDate(d);
+  var scr=Q('#slide-screen');if(!scr)return;
+  var nActs=acts.length;
+  var cardCols=nActs<=2?'1fr':(nActs<=4?'1fr 1fr':'1fr 1fr 1fr');
+  var cards='';
+  var bdayCard=bdays.length?'<div style="grid-column:1/-1;background:rgba(184,150,12,.15);border:1px solid rgba(184,150,12,.4);border-radius:8px;padding:14px 20px;display:flex;align-items:center;gap:14px"><div style="font-size:32px">🎂</div><div><div style="font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#f0c040;margin-bottom:4px">Cumpleaños de hoy</div><div style="font-size:18px;font-weight:600;color:#fff">'+bdays.map(b=>b.name).join(' · ')+'</div></div></div>':'';
+  if(!acts.length){cards=bdayCard+'<div style="grid-column:1/-1;display:flex;flex-direction:column;align-items:center;justify-content:center;height:200px;gap:16px;color:rgba(255,255,255,.18)"><div style="font-size:64px">📋</div><div style="font-size:18px;font-style:italic">Sin actividades para este día</div></div>';}
+  else{cards=bdayCard;acts.forEach(a=>{var bc=getTypeColor(a.tipo),tl=getTypeLabel(a.tipo);var resp=(a.responsables&&a.responsables.length)?a.responsables.join(', '):'—';var curArr=Array.isArray(a.cursos)?a.cursos:[];var pStr=personasStr(a.personas);cards+='<div style="border:1px solid rgba(255,255,255,.08);border-top:4px solid '+bc+';background:rgba(255,255,255,.04);border-radius:8px;padding:22px 24px;display:flex;flex-direction:column;gap:12px"><div><div style="font-size:10px;font-weight:700;color:'+bc+';text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px">'+tl+'</div><div style="font-family:Georgia,serif;font-size:22px;color:#fff;line-height:1.3;font-weight:500">'+a.titulo+'</div></div><div style="display:flex;gap:10px;flex-wrap:wrap"><span style="background:rgba(255,255,255,.08);border-radius:20px;padding:5px 14px;font-size:13px;font-weight:700;color:#fff">🕐 '+a.hora+(a.retorno?' → '+a.retorno:'')+'</span><span style="background:rgba(255,255,255,.08);border-radius:20px;padding:5px 14px;font-size:13px;color:rgba(255,255,255,.75)">'+(a.locacion==='externo'?'🌍':'🏫')+' '+a.lugar+'</span>'+(a.traslado?'<span style="background:rgba(184,150,12,.18);border-radius:20px;padding:5px 14px;font-size:13px;color:#f0c040">🚌 '+(a.trasladoDet||'Traslado')+'</span>':'')+'</div><div style="border-top:1px solid rgba(255,255,255,.07);padding-top:12px;display:flex;flex-direction:column;gap:7px;font-size:13px;color:rgba(255,255,255,.65)">'+(resp!=='—'?'<div><span style="color:rgba(255,255,255,.35);margin-right:6px">👤</span>'+resp+'</div>':'')+(curArr.length?'<div><span style="color:rgba(255,255,255,.35);margin-right:6px">📚</span>'+curArr.join(', ')+'</div>':'')+(pStr?'<div><span style="color:rgba(255,255,255,.35);margin-right:6px">👥</span>'+pStr+'</div>':'')+'</div></div>';});}
+  scr.innerHTML='<div style="position:absolute;inset:0;background:#0f0f14"><div style="position:absolute;top:0;left:0;right:0;height:8px;background:#D33A2E"></div><div style="position:absolute;top:8px;left:0;right:0;height:3px;background:#B8960C"></div><div style="position:absolute;bottom:0;left:0;right:0;height:8px;background:#D33A2E"></div><div style="position:absolute;bottom:11px;left:0;right:0;height:3px;background:#B8960C"></div><div style="position:absolute;top:11px;left:0;right:0;bottom:11px;display:flex"><div style="width:300px;flex-shrink:0;background:#D33A2E;display:flex;flex-direction:column;justify-content:space-between;padding:40px 32px 32px"><div><div style="font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.55);margin-bottom:12px">Saint Peter\'s School</div><div style="font-family:Georgia,serif;font-size:72px;font-weight:600;color:#fff;line-height:1">'+day+'</div><div style="width:48px;height:3px;background:rgba(255,255,255,.4);margin:18px 0"></div><div style="font-family:Georgia,serif;font-size:20px;font-style:italic;color:rgba(255,255,255,.85);line-height:1.4">'+d.getDate()+' de<br>'+mn[d.getMonth()]+'<br>'+d.getFullYear()+'</div></div><div><div style="font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.45);margin-bottom:6px">'+nActs+' actividad'+(nActs!==1?'es':'')+'</div><div class="clock" style="font-size:12px;color:rgba(255,255,255,.5);letter-spacing:.06em;line-height:1.6"></div></div></div><div style="flex:1;overflow-y:auto;padding:28px 36px;display:grid;grid-template-columns:'+cardCols+';gap:18px;align-content:start">'+cards+'</div></div></div>';
+}
+
+on('#btn-tv-preview','click',()=>{Q('#tv-screen').innerHTML=buildTVInner();Q('#tv-overlay').classList.add('open');scaleEl(Q('#tv-screen'),1280,720);startTVClock();});
+on('#btn-tv-close','click',()=>{Q('#tv-overlay').classList.remove('open');stopTVClock();});
+on('#btn-tv-export-inner','click',()=>{var html=buildRotativoHTML();var b64=btoa(unescape(encodeURIComponent(html)));var a=document.createElement('a');a.href='data:text/html;charset=utf-8;base64,'+b64;a.download='index.html';document.body.appendChild(a);a.click();document.body.removeChild(a);showToast('✅ index.html exportado');});
+on('#btn-lamina','click',()=>{var today=new Date().toDateString(),s=getWeekStart(currentWeekOffset),def='Lunes';for(var i=0;i<5;i++){var dd=new Date(s);dd.setDate(s.getDate()+i);if(dd.toDateString()===today){def=DAYS[i];break;}}Q('#slide-day-sel').value=def;Q('#slide-overlay').classList.add('open');renderDaySlide();scaleEl(Q('#slide-screen'),1280,720);startTVClock();});
+on('#btn-slide-close','click',()=>{Q('#slide-overlay').classList.remove('open');stopTVClock();});
+on('#slide-day-sel','change',()=>{renderDaySlide();scaleEl(Q('#slide-screen'),1280,720);});
+window.addEventListener('resize',()=>{if(Q('#tv-overlay')&&Q('#tv-overlay').classList.contains('open'))scaleEl(Q('#tv-screen'),1280,720);if(Q('#slide-overlay')&&Q('#slide-overlay').classList.contains('open'))scaleEl(Q('#slide-screen'),1280,720);});
 function buildRotativoHTML(){
   var s=getWeekStart(currentWeekOffset),wl=formatWeekLabel(currentWeekOffset),wn=getWeekNumber(s);
   var mn=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
@@ -939,7 +1069,7 @@ on('#btn-export-rotativo','click',()=>{
   var html=buildRotativoHTML();
   var b64=btoa(unescape(encodeURIComponent(html)));
   var a=document.createElement('a');a.href='data:text/html;charset=utf-8;base64,'+b64;a.download='index.html';document.body.appendChild(a);a.click();document.body.removeChild(a);
-  showToast('✅ index.html descargado — listo para subir a GitHub');
+  showToast('✅ Exportado — semanal + 5 días rotando cada 12 seg');
 });
 
 // ══ CONFIG ══
@@ -954,7 +1084,19 @@ function makePeopleCfgList(listId,db,saveBtnId,addBtnId,csvInputId){
   if(csvEl)csvEl.addEventListener('change',function(){var f=this.files[0];if(!f)return;var reader=new FileReader();reader.onload=e=>{var lines=e.target.result.split(/\r?\n/).map(l=>l.trim()).filter(Boolean);var added=0;lines.forEach(name=>{if(!db.includes(name)){db.push(name);added++;}});render();showToast('✅ '+added+' personas importadas');saveToStorage();};reader.readAsText(f);this.value='';});
 }
 
-function renderBdaysCfg(){
+function renderCorreoCfg(){
+  var fields=['asunto','saludo','intro','cierre','firma','cargo','telefono','email'];
+  fields.forEach(f=>{var el=Q('#cfg-mail-'+f);if(el)el.value=MAIL_CONFIG[f]||'';});
+  updateCorreoPreview();
+  fields.forEach(f=>{var el=Q('#cfg-mail-'+f);if(el)el.addEventListener('input',()=>{MAIL_CONFIG[f]=el.value;updateCorreoPreview();});});
+}
+function updateCorreoPreview(){
+  var p=Q('#cfg-mail-preview');if(!p)return;
+  var cierre=(MAIL_CONFIG.cierre||'').replace(/\n/g,'<br>');
+  var rc='#D33A2E';
+  p.innerHTML=(cierre?'<p style="margin-bottom:12px">'+cierre+'</p>':'')+'<div style="padding:12px;background:#f9f9f9;border-left:4px solid '+rc+';border-radius:0 4px 4px 0"><div style="font-size:13px;font-weight:700">'+( MAIL_CONFIG.firma||'Firma')+'</div>'+(MAIL_CONFIG.cargo?'<div style="font-size:11px;color:#666;margin-top:2px">'+MAIL_CONFIG.cargo+'</div>':'')+(MAIL_CONFIG.telefono?'<div style="font-size:11px;color:#666;margin-top:3px">📞 '+MAIL_CONFIG.telefono+'</div>':'')+(MAIL_CONFIG.email?'<div style="font-size:11px;color:'+rc+';margin-top:2px">✉️ '+MAIL_CONFIG.email+'</div>':'')+'</div>';
+}
+on('#btn-cfg-save-correo','click',()=>{saveToStorage();showToast('✅ Texto del correo guardado');});
   var list=Q('#bdays-cfg-list');if(!list)return;list.innerHTML='';
   BIRTHDAYS_DB.forEach((b,idx)=>{var row=document.createElement('div');row.className='bday-cfg-row';row.innerHTML='<span style="font-size:12px;color:#9A9690;min-width:22px;text-align:right">'+(idx+1)+'.</span><input class="bday-cfg-name" type="text" value="'+(b.name||'')+'" placeholder="Nombre completo"><input class="bday-cfg-date" type="text" value="'+(b.date||'')+'" placeholder="DD/MM" style="max-width:80px"><button class="bday-cfg-del">×</button>';row.querySelector('.bday-cfg-name').addEventListener('input',e=>BIRTHDAYS_DB[idx].name=e.target.value);row.querySelector('.bday-cfg-date').addEventListener('input',e=>BIRTHDAYS_DB[idx].date=e.target.value);row.querySelector('.bday-cfg-del').addEventListener('click',()=>{BIRTHDAYS_DB.splice(idx,1);renderBdaysCfg();});list.appendChild(row);});
 }
